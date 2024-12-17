@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Document</title>
+</head>
+<style>
+    .dataForm {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        width: fit-content;
+        height: fit-content;
+        margin: auto;
+        padding: 20px;
+        background-color: #f6eed0;
+        color: white;
+        border-radius: 10px;
+    }
+
+    #uid, #uid:focus {
+        outline: none;
+        border-radius: 30px;
+        padding-left: 15px;
+        min-width: 200px;
+        min-height: 36px;
+        font-size: 24px;
+        font-weight: 400;
+        border: none;
+        margin-bottom: 10px;
+    }
+
+    #form {
+        background-color: #a89858;
+        color: white;
+        border-radius: 30px;
+        min-width: 125px;
+        min-height: 32px;
+        font-size: 20px;
+        border: none;
+    }
+
+    .data, .obj {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+
+    .obj > span {
+        margin-left: 20px;
+    }
+
+    .data span {
+        font-size: 20px;
+        color: black;
+        margin-bottom: 5px;
+        margin-left: 20px;
+    }
+
+    .data span:first-child {
+        margin-left: 0;
+        margin-top: 20px;
+    }
+    .obj > span:first-child, .obj > span:last-child {
+        margin-left: 0;
+        margin-top: 0;
+    }
+
+    .data span:last-child {
+        margin-bottom: 0;
+        margin-left: 0;
+    }
+</style>
+<body>
+<div class="dataForm">
+    <input type="text" id="uid" required placeholder="Type id"/><br/>
+    <input type="submit" id="form"/>
+    <div class="data">
+
+    </div>
+</div>
+
+
+<script>
+    const uid = document.getElementById("uid");
+    let dataDiv = document.querySelector(".data")
+    document.getElementById("form").onclick = async () => {
+        const r = await fetch("http://127.0.0.1:8080/data/" + uid.value, {
+            method: "GET",
+            mode: "cors",
+        })
+
+        const data = await r.json();
+        dataDiv.innerHTML = "<span>{</span>";
+
+        const element = document.createElement("span");
+        element.textContent = "{"
+        dataDiv.appendChild(element)
+
+        Object.entries(data).forEach(([key, value]) => {
+            const element = document.createElement("span");
+            if (key === "delivery" || key === "payment") {
+                element.className = "obj"
+                const el = document.createElement("span");
+                el.textContent = `${key}: {`;
+                element.appendChild(el);
+                Object.entries(value).forEach(([k, v]) => {
+                    const el = document.createElement("span");
+                    el.textContent = `    ${k}: ${v}`;
+                    element.appendChild(el);
+                });
+            } else {
+                element.textContent = `${key}: ${value}`;
+            }
+
+            if (key === "delivery" || key === "payment") {
+                const el = document.createElement("span");
+                el.textContent = `}`;
+                element.appendChild(el);
+            }
+
+            dataDiv.appendChild(element);
+        });
+
+        element.textContent = "}"
+        dataDiv.appendChild(element)
+    };
+</script>
+</body>
+</html>

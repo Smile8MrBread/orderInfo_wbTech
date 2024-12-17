@@ -1,0 +1,4 @@
+migrate:
+	go run app/cmd/migrator/main.go --storage-path=./app/storage/app.db --migrations-path=./app/migrations
+run:
+	go run app/cmd/main/main.go

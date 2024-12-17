@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - '2181:2181'
+    networks:
+      - network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - '9092:9092'
+    networks:
+      - network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:latest
+    networks:
+      - network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: wb_orderInfo_database
+    volumes:
+      - ./app/storage/db:/var/lib/postgresql/data
+      - ./app/storage/migrations:/docker-entrypoint-initdb.d
+
+  go_app:
+    container_name: go_app
+    build:
+      context: .
+      dockerfile: app/cmd/main/Dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      - kafka
+      - zookeeper
+      - postgresql
+    volumes:
+      - ./app/cmd/client:/client
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
+volumes:
+  postgres-data:
